@@ -1,0 +1,21 @@
+name: Validate docker-compose
+
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "DB_PASSWORD=test" >> .env
+          echo "JWT_SECRET=test-secret-key-minimum-32-characters-long" >> .env
+
+      - name: Validate docker-compose syntax
+        run: docker compose config
