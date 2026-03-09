@@ -1,0 +1,53 @@
+services:
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: SnippetVault
+      POSTGRES_USER: snippetvault
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "snippetvault", "-d", "SnippetVault"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api:
+    build:
+      context: "../SnippetVault API"
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=db;Database=SnippetVault;Username=snippetvault;Password=${DB_PASSWORD}"
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      JwtSettings__Issuer: SnippetVault
+      JwtSettings__Audience: SnippetVault
+      JwtSettings__ExpirationInMinutes: "60"
+      AllowedOrigins__0: http://localhost
+      AllowedOrigins__1: http://localhost:80
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - api_logs:/app/Logs
+
+  client:
+    build:
+      context: "../SnippetVault-Client/client"
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  api_logs:
