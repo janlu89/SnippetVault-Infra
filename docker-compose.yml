@@ -1,21 +1,21 @@
 services:
 
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: postgres:17
     environment:
-      SA_PASSWORD: ${DB_PASSWORD}
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Express"
+      POSTGRES_DB: SnippetVault
+      POSTGRES_USER: snippetvault
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${DB_PASSWORD}", "-Q", "SELECT 1", "-C"]
+      test: ["CMD", "pg_isready", "-U", "snippetvault", "-d", "SnippetVault"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 20s
 
   api:
     build:
@@ -24,7 +24,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: "Server=db;Database=SnippetVault;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True;"
+      ConnectionStrings__DefaultConnection: "Host=db;Database=SnippetVault;Username=snippetvault;Password=${DB_PASSWORD}"
       JwtSettings__SecretKey: ${JWT_SECRET}
       JwtSettings__Issuer: SnippetVault
       JwtSettings__Audience: SnippetVault
@@ -49,5 +49,5 @@ services:
       - api
 
 volumes:
-  sqlserver_data:
+  postgres_data:
   api_logs:
