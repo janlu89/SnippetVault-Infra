@@ -1,0 +1,15 @@
+name: Keep API Warm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://snippetvault-api.onrender.com/scalar)
+          echo "Response code: $response"
